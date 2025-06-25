@@ -34,7 +34,9 @@ Here is an example
 ## RFIS to CFS Android app
 Use the advanced mode to set the id as "Material Code"
 
-# How to build locally :
+--------------------------
+
+## How to build locally :
 ### Build the binaries
 `docker build -t filament-sync-tool-builder:latest .`
 
