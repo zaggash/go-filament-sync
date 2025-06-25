@@ -131,40 +131,32 @@ func GetSlicerProfileDir(slicerType, userID string) (string, error) {
 		return "", fmt.Errorf("failed to get user home directory: %w", err)
 	}
 
-	baseDir := ""
-	profilePath := ""
-
+	// Define the base paths relative to the home directory for each OS.
+	var osBaseDir string
 	switch runtime.GOOS {
 	case "darwin": // macOS
-		baseDir = filepath.Join(homeDir, "Library", "Application Support")
-		if slicerType == "orca" {
-			profilePath = filepath.Join(baseDir, "OrcaSlicer", "user", userID, "filament", "base")
-		} else if slicerType == "creality" {
-			profilePath = filepath.Join(baseDir, "Creality", "Creality Print", "6.0", "user", userID, "filament", "base")
-		} else {
-			return "", fmt.Errorf("unsupported slicer type: %s. Must be 'orca' or 'creality'", slicerType)
-		}
+		osBaseDir = filepath.Join(homeDir, "Library", "Application Support")
 	case "linux":
-		baseDir = filepath.Join(homeDir, ".config")
-		if slicerType == "orca" {
-			profilePath = filepath.Join(baseDir, "OrcaSlicer", "user", userID, "filament") // Corrected path based on user feedback
-		} else if slicerType == "creality" {
-			profilePath = filepath.Join(baseDir, "Creality", "Creality Print", "6.0", "user", userID, "filament", "base")
-		} else {
-			return "", fmt.Errorf("unsupported slicer type: %s. Must be 'orca' or 'creality'", slicerType)
-		}
+		osBaseDir = filepath.Join(homeDir, ".config")
 	case "windows":
-		baseDir = filepath.Join(homeDir, "AppData", "Roaming")
-		if slicerType == "orca" {
-			profilePath = filepath.Join(baseDir, "OrcaSlicer", "user", userID, "filament", "base")
-		} else if slicerType == "creality" {
-			profilePath = filepath.Join(baseDir, "Creality", "Creality Print", "6.0", "user", userID, "filament", "base")
-		} else {
-			return "", fmt.Errorf("unsupported slicer type: %s. Must be 'orca' or 'creality'", slicerType)
-		}
+		osBaseDir = filepath.Join(homeDir, "AppData", "Roaming")
 	default:
 		return "", fmt.Errorf("unsupported operating system: %s", runtime.GOOS)
 	}
+
+	// Map slicer types to their consistent relative paths from the determined osBaseDir,
+	// given that paths are now uniform across OS for each slicer.
+	slicerPaths := map[string]string{
+		"orca":     filepath.Join("OrcaSlicer", "user", userID, "filament"),
+		"creality": filepath.Join("Creality", "Creality Print", "6.0", "user", userID, "filament"),
+	}
+
+	relativePath, ok := slicerPaths[slicerType]
+	if !ok {
+		return "", fmt.Errorf("unsupported slicer type: %s. Must be 'orca' or 'creality'", slicerType)
+	}
+
+	profilePath := filepath.Join(osBaseDir, relativePath)
 
 	if _, err := os.Stat(profilePath); os.IsNotExist(err) {
 		return "", fmt.Errorf("slicer profile directory does not exist: %s", profilePath)
@@ -223,5 +215,4 @@ func LoadCustomProfiles(dir string) ([]string, error) {
 
 	return profilePaths, nil
 }
-
 
