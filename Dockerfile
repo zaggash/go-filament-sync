@@ -1,0 +1,21 @@
+FROM golang:1.24-alpine AS builder
+
+WORKDIR /app
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+
+# Build the Go application for Linux x86_64 architecture.
+# CGO_ENABLED=0 creates a statically linked binary.
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -o filament-sync-tool_linux_amd64 .
+
+# Build for macOS (Intel/AMD64).
+# If building on an Apple Silicon Mac and targeting native ARM, change GOARCH=arm64.
+RUN CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -a -installsuffix cgo -o filament-sync-tool_macos_amd64 .
+
+# Build for Windows x86_64.
+# Note the .exe extension for Windows binaries.
+RUN CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -a -installsuffix cgo -o filament-sync-tool_windows_amd64.exe .
+
