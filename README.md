@@ -9,6 +9,22 @@ Run the binary as a post-processing script to sync the profiles to the printer.
 Please open an issue if you see anything wrong so we can improve the tool !
 
 
+## Usage
+```
+Usage of filament-sync-tool:
+  -password string
+    	Password for SSH connection to printer (default "creality_2024")
+  -printer-ip string
+    	IP address of the Creality printer (required)
+  -slicer string
+    	Specify the slicer type: 'orca' or 'creality' (default "orca")
+  -user string
+    	Username for SSH connection to printer (default "root")
+  -userid string
+    	Specify the user ID for the slicer profile folder (default "default")
+```
+
+
 ## Creating custom filament presets
 If you want to get your presets ready just copy your settings into a new custom filament profile
 
