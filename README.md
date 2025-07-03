@@ -1,17 +1,21 @@
 Heavily inspired by https://github.com/HurricanePrint/Filament-Sync
 
 This one allow you to not have a service on the printer and work as a single binary.
-No need to install dependencies on the printer.
+***No need to install dependencies on the printer.***
 
 Run the binary as a post-processing script to sync the profiles to the printer.
 
 
 Please open an issue if you see anything wrong so we can improve the tool !
 
+## Download
+Current build release is available here:
+https://github.com/zaggash/go-filament-sync/releases/latest
+
 
 ## Usage
 ```
-Usage of filament-sync-tool:
+Usage of ./filament-sync-tool :
   -password string
     	Password for SSH connection to printer (default "creality_2024")
   -printer-ip string
@@ -54,7 +58,7 @@ Use the advanced mode to set the id as "Material Code"
 
 ## How to build locally :
 ### Build the binaries
-`docker build -t filament-sync-tool-builder:latest .`
+`docker build -f ./docker/Dockerfile.build -t filament-sync-tool-builder:latest .`
 
 ### Run temp container to extract binaries
 `docker create --name temp_tool_container filament-sync-tool-builder:latest`

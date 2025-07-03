@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"filament-sync-tool/profiles" // Import the profiles package from the local module
+	"filament-sync-tool/cli/profiles" // Import the profiles package from the local module
 )
 
 // MaterialDatabase represents the top-level structure of the Creality material_database.json.

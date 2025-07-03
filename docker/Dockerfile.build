@@ -5,7 +5,7 @@ WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
 
-COPY . .
+COPY ./sync-cli/* .
 
 # Build the Go application for Linux x86_64 architecture.
 # CGO_ENABLED=0 creates a statically linked binary.

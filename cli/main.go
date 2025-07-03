@@ -9,10 +9,10 @@ import (
 	"path/filepath"
 	"time"
 
-	"filament-sync-tool/config"   // Import our new config package
-	"filament-sync-tool/creality" // Import our new creality package
-	"filament-sync-tool/profiles"  // Import our new profiles package
-	"filament-sync-tool/scp"      // Import our new scp package
+	"filament-sync-tool/cli/config"   // Import our new config package
+	"filament-sync-tool/cli/creality" // Import our new creality package
+	"filament-sync-tool/cli/profiles"  // Import our new profiles package
+	"filament-sync-tool/cli/scp"      // Import our new scp package
 )
 
 // Global variable to hold parsed config, populated by config.LoadConfig()

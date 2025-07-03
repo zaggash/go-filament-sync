@@ -1,0 +1,5 @@
+{
+  "filamentDetect":true,
+  "filamentCheckOnStart":true,
+  "filamentAutoRefill":true
+}
