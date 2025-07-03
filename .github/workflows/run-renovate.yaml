@@ -1,0 +1,36 @@
+---
+name: Renovate
+
+on:
+  workflow_dispatch:
+    inputs:
+      dryRun:
+        description: "Dry-Run"
+        default: false
+        required: false
+        type: boolean
+      logLevel:
+        description: "Log-Level"
+        default: "debug"
+        required: false
+  schedule:
+    - cron: "0 * * * *"
+  push:
+    branches:
+      - master
+    paths:
+      - ".github/renovate-bot.json5"
+      - ".github/renovate.json5"
+      - ".github/workflows/run-renovate.yaml"
+
+jobs:
+  renovate:
+    name: Renovate
+    uses: zaggash/gh-workflows/.github/workflows/action_renovate.yaml@main
+    with:
+      configurationFile: ".github/renovate-bot.json5"
+      dryRun: ${{ inputs.dryRun || 'false' }}
+      renovateLogLevel: ${{ inputs.logLevel || 'debug' }}
+    secrets:
+      app_id: ${{ secrets.ZAGGBOT_APP_ID }}
+      app_private_key: ${{ secrets.ZAGGBOT_APP_PRIVATE_KEY }}

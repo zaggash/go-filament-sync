@@ -1,0 +1,53 @@
+---
+name: Package build
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Binary build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout current
+        uses: actions/checkout@v4
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 'stable'
+
+      - name: Building Binaries
+        run: |
+          ./build.sh
+
+      - name: Generate Token
+        uses: tibdex/github-app-token@v2
+        id: generate-token
+        with:
+          app_id: ${{ secrets.zaggbot_app_id }}
+          private_key: ${{ secrets.zaggbot_app_private_key }}
+
+      - name: Create release and upload artifacts
+        uses: ncipollo/release-action@v1
+        with:
+          token: "${{ steps.generate-token.outputs.token }}"
+          artifactErrorsFailBuild: true
+          removeArtifacts: true
+          allowUpdates: true
+          generateReleaseNotes: true
+          prerelease: true
+          tag: dev-main
+          commit: ${{ env.GITHUB_SHA }}
+          name: "latest dev pre-release"
+          artifacts: "./release/filament-sync-tool_*"
+          body: |
+            pre-release build  
+            --------------------------------------  
+            Windows release is detected as a virus.  
+            You can trust me or not but it is not a Virus.  
+
+            Most of the time if the program is not signed, it is flagged in Windows.  
+            You can read more about it here:  
+            https://go.dev/doc/faq#virus
