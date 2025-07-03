@@ -1,16 +1,19 @@
-Heavily inspired by https://github.com/HurricanePrint/Filament-Sync
+Heavily inspired by https://github.com/HurricanePrint/Filament-Sync  
 
-This one allow you to not have a service on the printer and work as a single binary.
+This one allow you to not have a service on the printer and work as a single binary.  
 ***No need to install dependencies on the printer.***
 
-Run the binary as a post-processing script to sync the profiles to the printer.
+Run the binary as a post-processing script to sync the profiles to the printer.  
 
 
-Please open an issue if you see anything wrong so we can improve the tool !
+Please open an issue if you see anything wrong so we can improve the tool !  
 
 ## Download
-Current build release is available here:
-https://github.com/zaggash/go-filament-sync/releases/latest
+Current build release is available here:  
+https://github.com/zaggash/go-filament-sync/releases/latest  
+
+Latest dev pre-release are available here:  
+https://github.com/zaggash/go-filament-sync/releases/tag/dev-main
 
 
 ## Usage
