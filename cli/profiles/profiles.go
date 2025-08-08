@@ -147,8 +147,8 @@ func GetSlicerProfileDir(slicerType, userID string) (string, error) {
 	// Map slicer types to their consistent relative paths from the determined osBaseDir,
 	// given that paths are now uniform across OS for each slicer.
 	slicerPaths := map[string]string{
-		"orca":     filepath.Join("OrcaSlicer", "user", userID, "filament"),
-		"creality": filepath.Join("Creality", "Creality Print", "6.0", "user", userID, "filament"),
+		"orca":     filepath.Join("OrcaSlicer", "user", userID, "filament/base"),
+		"creality": filepath.Join("Creality", "Creality Print", "6.0", "user", userID, "filament/base"),
 	}
 
 	relativePath, ok := slicerPaths[slicerType]
