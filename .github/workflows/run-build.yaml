@@ -16,6 +16,7 @@ on:
     branches:
       - main
     paths-ignore:
+      - '.github/'
       - 'README.md'
       - 'docker/'
       - 'k2plus-default/'
@@ -70,8 +71,6 @@ jobs:
         with:
           token: "${{ steps.generate-token.outputs.token }}"
           artifactErrorsFailBuild: true
-          removeArtifacts: true
-          allowUpdates: true
           generateReleaseNotes: true
           prerelease: true
           tag: pre-${{ env.SHORT_SHA }}
