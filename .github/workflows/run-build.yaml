@@ -64,7 +64,6 @@ jobs:
             Most of the time if the program is not signed, it is flagged in Windows.                                                                                                                
             You can read more about it here:                                                                                                                                                        
             https://go.dev/doc/faq#virus
-            --------------------------------------
 
       - name: Create pre-release and upload artifacts
         uses: ncipollo/release-action@v1
