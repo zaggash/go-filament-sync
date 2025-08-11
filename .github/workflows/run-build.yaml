@@ -16,9 +16,10 @@ on:
     branches:
       - main
     paths-ignore:
+      - '.github/**'
       - 'README.md'
-      - 'docker/'
-      - 'k2plus-default/'
+      - 'docker/**'
+      - 'k2plus-default/**'
 
 jobs:
   build:
@@ -63,15 +64,12 @@ jobs:
             Most of the time if the program is not signed, it is flagged in Windows.                                                                                                                
             You can read more about it here:                                                                                                                                                        
             https://go.dev/doc/faq#virus
-            --------------------------------------
 
       - name: Create pre-release and upload artifacts
         uses: ncipollo/release-action@v1
         with:
           token: "${{ steps.generate-token.outputs.token }}"
           artifactErrorsFailBuild: true
-          removeArtifacts: true
-          allowUpdates: true
           generateReleaseNotes: true
           prerelease: true
           tag: pre-${{ env.SHORT_SHA }}
