@@ -2,6 +2,16 @@
 name: Package build
 
 on:
+  workflow_dispatch:
+    inputs:
+      create_release:
+        description: 'True to create release from tag'
+        required: true
+        type: boolean
+      tags:
+        description: 'Tag to create'
+        required: true
+        type: string
   push:
     branches:
       - main
@@ -24,6 +34,7 @@ jobs:
 
       - name: Building Binaries
         run: |
+          echo "SHORT_SHA=`git rev-parse --short HEAD`" >> $GITHUB_ENV
           ./build.sh
 
       - name: Generate Token
@@ -35,6 +46,27 @@ jobs:
 
       - name: Create release and upload artifacts
         uses: ncipollo/release-action@v1
+        if: ${{ inputs.create_release }}
+        with:                                                                                                                                                                                       
+          token: "${{ steps.generate-token.outputs.token }}"
+          artifactErrorsFailBuild: true
+          generateReleaseNotes: true
+          tag: ${{ inputs.tags }} 
+          name: v${{ inputs.tags }} 
+          artifacts: "./release/filament-sync-tool_*"
+          body: |
+            NOTE
+            --------------------------------------                                                                                                                                                  
+            Windows release is detected as a virus.                                                                                                                                                 
+            You can trust me or not but it is not a Virus.                                                                                                                                          
+                                                                                                                                                                                                    
+            Most of the time if the program is not signed, it is flagged in Windows.                                                                                                                
+            You can read more about it here:                                                                                                                                                        
+            https://go.dev/doc/faq#virus
+            --------------------------------------
+
+      - name: Create pre-release and upload artifacts
+        uses: ncipollo/release-action@v1
         with:
           token: "${{ steps.generate-token.outputs.token }}"
           artifactErrorsFailBuild: true
@@ -42,12 +74,12 @@ jobs:
           allowUpdates: true
           generateReleaseNotes: true
           prerelease: true
-          tag: dev-main
+          tag: pre-${{ env.SHORT_SHA }}
           commit: ${{ env.GITHUB_SHA }}
           name: "latest dev pre-release"
           artifacts: "./release/filament-sync-tool_*"
           body: |
-            pre-release build  
+            pre-release build ${{ env.SHORT_SHA }}
             --------------------------------------  
             Windows release is detected as a virus.  
             You can trust me or not but it is not a Virus.  
