@@ -12,25 +12,37 @@ Please open an issue if you see anything wrong so we can improve the tool !
 Current build release is available here:  
 https://github.com/zaggash/go-filament-sync/releases/latest  
 
-Latest dev pre-release are available here:  
-https://github.com/zaggash/go-filament-sync/releases/tag/dev-main
+Latest dev pre-release are also available.
 
 
 ## Usage
 ```
 Usage of ./filament-sync-tool :
-  -password string
+  --password string
     	Password for SSH connection to printer (default "creality_2024")
-  -printer-ip string
+  --printer-ip string
     	IP address of the Creality printer (required)
-  -slicer string
+  --slicer string
     	Specify the slicer type: 'orca' or 'creality' (default "orca")
-  -user string
+  --user string
     	Username for SSH connection to printer (default "root")
-  -userid string
+  --userid string
     	Specify the user ID for the slicer profile folder (default "default")
 ```
 
+## Run as post-processing script in slicer
+
+This will sync everytime you slice and export gcode to the printer  
+At the bottom of the "**Others**" tab of your slicing settings, find "**Post-processing Scripts**" 
+
+#### Windows
+
+Place the **filament-sync-tool.bat** somwhere on your computer running the slicer then add this line in the **Post-processing Scripts** section.  
+Replace "**[your-user-name]**" with your user folder name  
+
+```
+"C:\Users\[your-user-name]\Downloads\filament-sync-tool.bat"
+```
 
 ## Creating custom filament presets
 If you want to get your presets ready just copy your settings into a new custom filament profile

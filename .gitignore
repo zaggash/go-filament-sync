@@ -1,5 +1,6 @@
 # Binaries
 filament-sync-tool*
+!filament-sync-tool.bat
 release/
 
 
