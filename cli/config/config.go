@@ -13,6 +13,7 @@ type ToolConfig struct {
 	Password  string
 	Slicer    string // "orca" or "creality"
 	UserID    string // User ID for slicer profile paths
+	Flatpak   bool   // Flag to indicate if a Flatpak installation path should be used
 }
 
 // LoadConfig parses command-line arguments and returns a populated ToolConfig.
@@ -28,6 +29,7 @@ func LoadConfig() *ToolConfig {
 	password := flag.String("password", "creality_2024", "Password for SSH connection to printer")
 	slicerType := flag.String("slicer", "orca", "Specify the slicer type: 'orca' or 'creality'")
 	userID := flag.String("userid", "default", "Specify the user ID for the slicer profile folder")
+	isFlatpak := flag.Bool("flatpak", false, "Use Flatpak specific local paths (Linux only)")
 
 	// Parse the command-line flags
 	flag.Parse()
@@ -38,6 +40,7 @@ func LoadConfig() *ToolConfig {
 		Password:  *password,
 		Slicer:    *slicerType,
 		UserID:    *userID,
+		Flatpak:   *isFlatpak,
 	}
 
 	// Basic validation for critical configuration (printer IP is now required)
@@ -45,10 +48,9 @@ func LoadConfig() *ToolConfig {
 		log.Fatal("Error: Printer IP address is required. Use --printer-ip flag.")
 	}
 
-	log.Printf("Tool Config: PrinterIP=%s, User=%s, Slicer=%s, UserID=%s",
-		cfg.PrinterIP, cfg.User, cfg.Slicer, cfg.UserID)
+	log.Printf("Tool Config: PrinterIP=%s, User=%s, Slicer=%s, UserID=%s, Flatpak=%v",
+		cfg.PrinterIP, cfg.User, cfg.Slicer, cfg.UserID, cfg.Flatpak)
 
 	return cfg
 }
-
 
