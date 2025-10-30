@@ -32,7 +32,7 @@ func (s *SlicerFilamentProfile) UnmarshalJSON(data []byte) error {
 	type Alias SlicerFilamentProfile
 	aux := &struct {
 		*Alias
-	}{
+		}{
 		Alias: (*Alias)(s),
 	}
 	if err := json.Unmarshal(data, aux); err != nil {
@@ -77,7 +77,7 @@ func NormalizeSlicerProfile(slicerProfile *SlicerFilamentProfile) (map[string]st
 				normalizedData[key] = strVal
 			} else if numVal, ok := arr[0].(float64); ok {
 				normalizedData[key] = fmt.Sprintf("%v", numVal)
-			} else if boolVal, ok := arr[0].(bool); ok {
+			} else if boolVal, ok := value.([]interface{})[0].(bool); ok { // Corrected access for bool in array
 				normalizedData[key] = fmt.Sprintf("%v", boolVal)
 			} else {
 				// For complex types like "material_flow_temp_graph", keep as string representation
@@ -124,41 +124,78 @@ func NormalizeSlicerProfile(slicerProfile *SlicerFilamentProfile) (map[string]st
 	return normalizedData, notes, nil
 }
 
-// GetSlicerProfileDir determines the correct slicer profile directory based on OS and slicer type.
-func GetSlicerProfileDir(slicerType, userID string) (string, error) {
+// GetSlicerProfileDir determines the correct slicer profile directory based on OS, slicer type, and the flatpak flag.
+func GetSlicerProfileDir(slicerType, userID string, isFlatpak bool) (string, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return "", fmt.Errorf("failed to get user home directory: %w", err)
 	}
 
-	// Define the base paths relative to the home directory for each OS.
+	// Define the common path segment for standard installations (used by Windows, Mac, and non-Flatpak Linux)
+	standardSlicerPathSegment := map[string]string{
+		"orca":     filepath.Join("OrcaSlicer", "user", userID, "filament", "base"),
+		"creality": filepath.Join("Creality", "Creality Print", "6.0", "user", userID, "filament", "base"),
+	}
+
 	var osBaseDir string
+	var relativePath string
+
 	switch runtime.GOOS {
 	case "darwin": // macOS
 		osBaseDir = filepath.Join(homeDir, "Library", "Application Support")
+		relativePath = standardSlicerPathSegment[slicerType]
+
 	case "linux":
-		osBaseDir = filepath.Join(homeDir, ".config")
+		if isFlatpak {
+			// Define the Flatpak application ID and combine it with the slicer-specific suffix
+			flatpakAppIDs := map[string]string{
+				"orca":     "io.github.softfever.OrcaSlicer",
+				"creality": "io.github.crealityofficial.CrealityPrint",
+			}
+
+			appID, ok := flatpakAppIDs[slicerType]
+			if !ok {
+				return "", fmt.Errorf("unsupported slicer type for Flatpak: %s", slicerType)
+			}
+
+			// Define the configuration directory path common to both Flatpak slicers
+			configDir := filepath.Join(".var", "app", appID, "config")
+
+			// Combine the Flatpak prefix with the standard path segment's children
+			if slicerType == "orca" {
+				relativePath = filepath.Join(configDir, standardSlicerPathSegment["orca"])
+			} else { // "creality"
+				// Note: Creality's path has "Creality" before the rest of the standard segment
+				relativePath = filepath.Join(configDir, "Creality", standardSlicerPathSegment["creality"])
+			}
+
+			// For Flatpak, the base is homeDir
+			osBaseDir = homeDir
+
+		} else {
+			// Default Linux paths (non-Flatpak, standard installation)
+			osBaseDir = filepath.Join(homeDir, ".config")
+			relativePath = standardSlicerPathSegment[slicerType]
+		}
+
 	case "windows":
 		osBaseDir = filepath.Join(homeDir, "AppData", "Roaming")
+		relativePath = standardSlicerPathSegment[slicerType]
+
 	default:
 		return "", fmt.Errorf("unsupported operating system: %s", runtime.GOOS)
 	}
 
-	// Map slicer types to their consistent relative paths from the determined osBaseDir,
-	// given that paths are now uniform across OS for each slicer.
-	slicerPaths := map[string]string{
-		"orca":     filepath.Join("OrcaSlicer", "user", userID, "filament/base"),
-		"creality": filepath.Join("Creality", "Creality Print", "6.0", "user", userID, "filament/base"),
-	}
-
-	relativePath, ok := slicerPaths[slicerType]
-	if !ok {
+	// Final check to ensure we got a relative path for the requested slicerType
+	if relativePath == "" {
 		return "", fmt.Errorf("unsupported slicer type: %s. Must be 'orca' or 'creality'", slicerType)
 	}
 
 	profilePath := filepath.Join(osBaseDir, relativePath)
 
+	// Check if the calculated directory exists
 	if _, err := os.Stat(profilePath); os.IsNotExist(err) {
+		// If the path doesn't exist, return an error immediately.
 		return "", fmt.Errorf("slicer profile directory does not exist: %s", profilePath)
 	}
 
@@ -197,10 +234,13 @@ func LoadCustomProfiles(dir string) ([]string, error) {
 			if notesArr, isArray := notesVal.([]interface{}); isArray && len(notesArr) > 0 {
 				if noteStr, isString := notesArr[0].(string); isString && strings.TrimSpace(noteStr) != "" && strings.Contains(noteStr, `"id":`) {
 					var tempNotes FilamentNotes
-					if err := json.Unmarshal([]byte(strings.Trim(noteStr, `"`)), &tempNotes); err == nil && tempNotes.ID != "" {
+					// Check if the inner string is wrapped in quotes and unquote it if necessary
+					unquotedNoteStr := strings.Trim(noteStr, `"`)
+
+					if err := json.Unmarshal([]byte(unquotedNoteStr), &tempNotes); err == nil && tempNotes.ID != "" {
 						profilePaths = append(profilePaths, filePath)
 					} else {
-						log.Printf("Ignoring %s: filament_notes is not a valid JSON string or missing 'id'", file.Name())
+						log.Printf("Ignoring %s: filament_notes is not a valid JSON string or missing 'id'. Inner content: %s", file.Name(), unquotedNoteStr)
 					}
 				} else {
 					log.Printf("Ignoring %s: filament_notes is empty or not a string array", file.Name())

@@ -65,11 +65,11 @@ func main() {
 	printerTargetDir := "/mnt/UDISK/creality/userdata/box"
 
 	// Discover and load custom slicer profiles
-	profileDir, err := profiles.GetSlicerProfileDir(appConfig.Slicer, appConfig.UserID)
+	profileDir, err := profiles.GetSlicerProfileDir(appConfig.Slicer, appConfig.UserID, appConfig.Flatpak)
 	if err != nil {
 		log.Fatalf("Error determining slicer profile directory: %v", err)
 	}
-	log.Printf("Scanning for %s profiles in: %s", appConfig.Slicer, profileDir)
+	log.Printf("Scanning for %s profiles in: %s (Flatpak mode: %v)", appConfig.Slicer, profileDir, appConfig.Flatpak)
 
 	slicerProfilePaths, err := profiles.LoadCustomProfiles(profileDir)
 	if err != nil {
