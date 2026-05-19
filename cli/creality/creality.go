@@ -172,6 +172,9 @@ func LoadDefaultOptionsFromBytes(data []byte) (MaterialOptions, error) {
 
 // ConvertToCrealityFormat converts a normalized slicer profile into a CrealityFilamentData structure.
 func ConvertToCrealityFormat(slicerProfileData map[string]string, notes *profiles.FilamentNotes) (*FilamentProfileEntry, error) {
+	if notes == nil {
+		return nil, fmt.Errorf("filament notes must not be nil")
+	}
 	// Marshal the original filamentNotes struct back into a JSON string, then escape it.
 	notesBytes, err := json.Marshal(notes)
 	if err != nil {
@@ -296,16 +299,11 @@ func ConvertToCrealityFormat(slicerProfileData map[string]string, notes *profile
 		TexturedPlateTempInitialLayer:    assignKVParam("textured_plate_temp_initial_layer"),
 	}
 
-	if notes != nil {
-		if notes.Type != "" {
-			newEntry.KVParam.FilamentType = notes.Type
-		}
-		if notes.Vendor != "" {
-			newEntry.KVParam.FilamentVendor = notes.Vendor
-		}
-	} else {
-		newEntry.KVParam.FilamentType = assignKVParam("filament_type")
-		newEntry.KVParam.FilamentVendor = assignKVParam("filament_vendor")
+	if notes.Type != "" {
+		newEntry.KVParam.FilamentType = notes.Type
+	}
+	if notes.Vendor != "" {
+		newEntry.KVParam.FilamentVendor = notes.Vendor
 	}
 
 	newEntry.Base.IsSoluble = assignKVParam("filament_soluble") == "1"
