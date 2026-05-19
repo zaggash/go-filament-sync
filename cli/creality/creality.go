@@ -3,7 +3,6 @@ package creality
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil" // Still needed for LoadDefaultDatabase(filePath string) if it remains, otherwise remove.
 	"strconv"
 	"strings"
 
@@ -55,12 +54,12 @@ type KVParam struct {
 	EngPlateTemp                     string `json:"eng_plate_temp"`
 	EngPlateTempInitialLayer         string `json:"eng_plate_temp_initial_layer"`
 	EpoxyResinPlateTemp              string `json:"epoxy_resin_plate_temp"`
-	EpoxyResinPlateTempInitialLayer  string `json:"epoxy_resin_plate_initial_layer"`
+	EpoxyResinPlateTempInitialLayer  string `json:"epoxy_resin_plate_temp_initial_layer"`
 	FanCoolingLayerTime              string `json:"fan_cooling_layer_time"`
 	FanMaxSpeed                      string `json:"fan_max_speed"`
 	FanMinSpeed                      string `json:"fan_min_speed"`
 	FilamentCoolingFinalSpeed        string `json:"filament_cooling_final_speed"`
-	FilamentCoolingInitialSpeed      string `json:"filament_cooling_initial_initial"`
+	FilamentCoolingInitialSpeed        string `json:"filament_cooling_initial_speed"`
 	FilamentCoolingMoves             string `json:"filament_cooling_moves"`
 	FilamentCost                     string `json:"filament_cost"`
 	FilamentDensity                  string `json:"filament_density"`
@@ -142,7 +141,7 @@ type BaseInfo struct {
 	MinTemp       int      `json:"minTemp"`
 	MaxTemp       int      `json:"maxTemp"`
 	IsSoluble     bool     `json:"isSoluble"`
-	IsSupport     bool     `json:"isSuppoert"` // Note: "isSuppoert" as in source JSON
+	IsSupport     bool     `json:"isSupport"`
 	ShrinkageRate int      `json:"shrinkageRate"`
 	SofteningTemp int      `json:"softeningTemp"`
 	DryingTemp    int      `json:"dryingTemp"`
@@ -153,21 +152,6 @@ type BaseInfo struct {
 // The inner values are newline-separated strings of names.
 type MaterialOptions map[string]map[string]string
 
-// LoadDefaultDatabase reads the default material_database.json file.
-// This function is kept but will not be used by main.go due to embedding.
-func LoadDefaultDatabase(filePath string) (*MaterialDatabase, error) {
-	data, err := ioutil.ReadFile(filePath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read default material database file %s: %w", filePath, err)
-	}
-
-	var db MaterialDatabase
-	if err := json.Unmarshal(data, &db); err != nil {
-		return nil, fmt.Errorf("failed to parse default material database JSON: %w", err)
-	}
-	return &db, nil
-}
-
 // LoadDefaultDatabaseFromBytes loads the material database from a byte slice.
 func LoadDefaultDatabaseFromBytes(data []byte) (*MaterialDatabase, error) {
 	var db MaterialDatabase
@@ -175,21 +159,6 @@ func LoadDefaultDatabaseFromBytes(data []byte) (*MaterialDatabase, error) {
 		return nil, fmt.Errorf("failed to parse material database from bytes: %w", err)
 	}
 	return &db, nil
-}
-
-// LoadDefaultOptions reads the default material_option.json file.
-// This function is kept but will not be used by main.go due to embedding.
-func LoadDefaultOptions(filePath string) (MaterialOptions, error) {
-	data, err := ioutil.ReadFile(filePath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read default material options file %s: %w", filePath, err)
-	}
-
-	var options MaterialOptions
-	if err := json.Unmarshal(data, &options); err != nil {
-		return nil, fmt.Errorf("failed to parse default material options JSON: %w", err)
-	}
-	return options, nil
 }
 
 // LoadDefaultOptionsFromBytes loads the material options from a byte slice.
@@ -203,15 +172,19 @@ func LoadDefaultOptionsFromBytes(data []byte) (MaterialOptions, error) {
 
 // ConvertToCrealityFormat converts a normalized slicer profile into a CrealityFilamentData structure.
 func ConvertToCrealityFormat(slicerProfileData map[string]string, notes *profiles.FilamentNotes) (*FilamentProfileEntry, error) {
-	// Marshal the original filamentNotes struct back into a JSON string, then escape it.
+	if notes == nil {
+		return nil, fmt.Errorf("filament notes must not be nil")
+	}
+	// Marshal the original filamentNotes struct to a JSON string for storage in kvParam.filament_notes.
+	// The reference format stores this as a plain JSON string (not double-encoded).
 	notesBytes, err := json.Marshal(notes)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal filament notes: %w", err)
 	}
-	quotedNotes := strconv.Quote(string(notesBytes)) // Add quotes around the JSON string
+	notesJSON := string(notesBytes)
 
 	newEntry := &FilamentProfileEntry{
-		EngineVersion:  slicerProfileData["version"],
+		EngineVersion:  "3.0.0", // Creality database format version, not the slicer profile version
 		PrinterIntName: "F008",          // Hardcoded from original JS
 		NozzleDiameter: []string{"0.4"}, // Hardcoded from original JS
 		KVParam:        KVParam{},
@@ -255,12 +228,12 @@ func ConvertToCrealityFormat(slicerProfileData map[string]string, notes *profile
 		EngPlateTemp:                     assignKVParam("eng_plate_temp"),
 		EngPlateTempInitialLayer:         assignKVParam("eng_plate_temp_initial_layer"),
 		EpoxyResinPlateTemp:              assignKVParam("epoxy_resin_plate_temp"),
-		EpoxyResinPlateTempInitialLayer:  assignKVParam("epoxy_resin_plate_initial_layer"),
+		EpoxyResinPlateTempInitialLayer:  assignKVParam("epoxy_resin_plate_temp_initial_layer"),
 		FanCoolingLayerTime:              assignKVParam("fan_cooling_layer_time"),
 		FanMaxSpeed:                      assignKVParam("fan_max_speed"),
 		FanMinSpeed:                      assignKVParam("fan_min_speed"),
 		FilamentCoolingFinalSpeed:        assignKVParam("filament_cooling_final_speed"),
-		FilamentCoolingInitialSpeed:      assignKVParam("filament_cooling_initial_initial"),
+		FilamentCoolingInitialSpeed:      assignKVParam("filament_cooling_initial_speed"),
 		FilamentCoolingMoves:             assignKVParam("filament_cooling_moves"),
 		FilamentCost:                     assignKVParam("filament_cost"),
 		FilamentDensity:                  assignKVParam("filament_density"),
@@ -277,7 +250,7 @@ func ConvertToCrealityFormat(slicerProfileData map[string]string, notes *profile
 		FilamentMultitoolRamming:         assignKVParam("filament_multitool_ramming"),
 		FilamentMultitoolRammingFlow:     assignKVParam("filament_multitool_ramming_flow"),
 		FilamentMultitoolRammingVolume:   assignKVParam("filament_multitool_ramming_volume"),
-		FilamentNotes:                    quotedNotes,
+		FilamentNotes:                    notesJSON,
 		FilamentRammingParameters:        assignKVParam("filament_ramming_parameters"),
 		FilamentRetractBeforeWipe:        assignKVParam("filament_retract_before_wipe"),
 		FilamentRetractLiftAbove:         assignKVParam("filament_retract_lift_above"),
@@ -327,16 +300,11 @@ func ConvertToCrealityFormat(slicerProfileData map[string]string, notes *profile
 		TexturedPlateTempInitialLayer:    assignKVParam("textured_plate_temp_initial_layer"),
 	}
 
-	if notes != nil {
-		if notes.Type != "" {
-			newEntry.KVParam.FilamentType = notes.Type
-		}
-		if notes.Vendor != "" {
-			newEntry.KVParam.FilamentVendor = notes.Vendor
-		}
-	} else {
-		newEntry.KVParam.FilamentType = assignKVParam("filament_type")
-		newEntry.KVParam.FilamentVendor = assignKVParam("filament_vendor")
+	if notes.Type != "" {
+		newEntry.KVParam.FilamentType = notes.Type
+	}
+	if notes.Vendor != "" {
+		newEntry.KVParam.FilamentVendor = notes.Vendor
 	}
 
 	newEntry.Base.IsSoluble = assignKVParam("filament_soluble") == "1"
@@ -394,7 +362,7 @@ func AddProfileToDatabase(db *MaterialDatabase, newProfile *FilamentProfileEntry
 // and appending new names to existing vendor/type combinations.
 func UpdateOptions(options MaterialOptions, notes *profiles.FilamentNotes) {
 	if options == nil {
-		return // Should not happen if LoadDefaultOptions is called
+		return
 	}
 
 	vendor := notes.Vendor
@@ -428,34 +396,6 @@ func UpdateOptions(options MaterialOptions, notes *profiles.FilamentNotes) {
 		options[vendor][filamentType] = name
 	}
 }
-
-// Removed SaveDatabase function - no longer persisting to local disk.
-/*
-func SaveDatabase(db *MaterialDatabase, filePath string) error {
-	data, err := json.MarshalIndent(db, "", "\t")
-	if err != nil {
-		return fmt.Errorf("failed to marshal material database JSON: %w", err)
-	}
-	if err := ioutil.WriteFile(filePath, data, 0644); err != nil {
-		return fmt.Errorf("failed to write material database file %s: %w", filePath, err)
-	}
-	return nil
-}
-*/
-
-// Removed SaveOptions function - no longer persisting to local disk.
-/*
-func SaveOptions(options MaterialOptions, filePath string) error {
-	data, err := json.MarshalIndent(options, "", "\t")
-	if err != nil {
-		return fmt.Errorf("failed to marshal material options JSON: %w", err)
-	}
-	if err := ioutil.WriteFile(filePath, data, 0644); err != nil {
-		return fmt.Errorf("failed to write material options file %s: %w", filePath, err)
-	}
-	return nil
-}
-*/
 
 // MarshalDatabase converts a MaterialDatabase struct to its JSON byte representation.
 func MarshalDatabase(db *MaterialDatabase) ([]byte, error) {

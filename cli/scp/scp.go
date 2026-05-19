@@ -54,7 +54,7 @@ func (c *SCPClient) Connect() error {
 
 	client, err := ssh.Dial("tcp", c.Host+":22", config)
 	if err != nil {
-		return fmt.Errorf("failed to dial SSH: %w", err)
+		return fmt.Errorf("failed to connect to %s: %w", c.Host, err)
 	}
 	c.sshClient = client
 	log.Printf("SSH client connected to %s", c.Host)
@@ -82,7 +82,7 @@ func (c *SCPClient) CheckRemoteDirectory(targetFileDir string) (string, error) {
 	defer c.mu.Unlock()
 
 	if c.sshClient == nil || c.sshClient.Conn == nil || c.sshClient.Conn.LocalAddr() == nil {
-		return "", fmt.Errorf("SSH client not connected. Call Connect() first.")
+		return "", fmt.Errorf("SSH client not connected — call Connect() first")
 	}
 
 	session, err := c.sshClient.NewSession()
@@ -109,7 +109,7 @@ func (c *SCPClient) UploadFile(reader io.Reader, remotePath string, fileName str
 	log.Printf("Attempting to upload %s (size: %d) to %s:%s using SCP", fileName, fileSize, c.Host, remotePath)
 
 	if c.sshClient == nil || c.sshClient.Conn == nil || c.sshClient.Conn.LocalAddr() == nil {
-		return fmt.Errorf("SSH client not connected. Call Connect() first.")
+		return fmt.Errorf("SSH client not connected — call Connect() first")
 	}
 
 	session, err := c.sshClient.NewSession()
