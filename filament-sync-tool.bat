@@ -19,7 +19,7 @@ set SSH_PASSWORD=creality_2024
 :: Set the Printer IP
 set PRINTER_IP=192.x.x.x
 
-"C:\Users\%userprofile%\Downloads\filament-sync-tool.exe" --printer-ip %PRINTER_IP% --user %SSH_USER% --password %SSH_PASSWORD% --profile-path %PROFILE_PATH%
+"%userprofile%\Downloads\filament-sync-tool.exe" --printer-ip %PRINTER_IP% --user %SSH_USER% --password %SSH_PASSWORD% --profile-path %PROFILE_PATH%
 
 :: Add a pause to check logs if anythings goes wrong in the execution, uncomment the line below.
 :: pause
