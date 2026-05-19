@@ -3,7 +3,6 @@ package profiles
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -48,7 +47,7 @@ func (s *SlicerFilamentProfile) UnmarshalJSON(data []byte) error {
 
 // ReadSlicerProfile reads a JSON file and unmarshals it into a SlicerFilamentProfile.
 func ReadSlicerProfile(filePath string) (*SlicerFilamentProfile, error) {
-	data, err := ioutil.ReadFile(filePath)
+	data, err := os.ReadFile(filePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read file %s: %w", filePath, err)
 	}
@@ -209,7 +208,7 @@ func GetSlicerProfileDir(slicerType, userID string, isFlatpak bool) (string, err
 func LoadCustomProfiles(dir string) ([]string, error) {
 	var profilePaths []string
 
-	files, err := ioutil.ReadDir(dir)
+	files, err := os.ReadDir(dir)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read directory %s: %w", dir, err)
 	}
@@ -220,7 +219,7 @@ func LoadCustomProfiles(dir string) ([]string, error) {
 		}
 
 		filePath := filepath.Join(dir, file.Name())
-		data, err := ioutil.ReadFile(filePath)
+		data, err := os.ReadFile(filePath)
 		if err != nil {
 			log.Printf("Skipping %s: failed to read file: %v", file.Name(), err)
 			continue
