@@ -3,7 +3,6 @@ package creality
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil" // Still needed for LoadDefaultDatabase(filePath string) if it remains, otherwise remove.
 	"strconv"
 	"strings"
 
@@ -153,21 +152,6 @@ type BaseInfo struct {
 // The inner values are newline-separated strings of names.
 type MaterialOptions map[string]map[string]string
 
-// LoadDefaultDatabase reads the default material_database.json file.
-// This function is kept but will not be used by main.go due to embedding.
-func LoadDefaultDatabase(filePath string) (*MaterialDatabase, error) {
-	data, err := ioutil.ReadFile(filePath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read default material database file %s: %w", filePath, err)
-	}
-
-	var db MaterialDatabase
-	if err := json.Unmarshal(data, &db); err != nil {
-		return nil, fmt.Errorf("failed to parse default material database JSON: %w", err)
-	}
-	return &db, nil
-}
-
 // LoadDefaultDatabaseFromBytes loads the material database from a byte slice.
 func LoadDefaultDatabaseFromBytes(data []byte) (*MaterialDatabase, error) {
 	var db MaterialDatabase
@@ -175,21 +159,6 @@ func LoadDefaultDatabaseFromBytes(data []byte) (*MaterialDatabase, error) {
 		return nil, fmt.Errorf("failed to parse material database from bytes: %w", err)
 	}
 	return &db, nil
-}
-
-// LoadDefaultOptions reads the default material_option.json file.
-// This function is kept but will not be used by main.go due to embedding.
-func LoadDefaultOptions(filePath string) (MaterialOptions, error) {
-	data, err := ioutil.ReadFile(filePath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read default material options file %s: %w", filePath, err)
-	}
-
-	var options MaterialOptions
-	if err := json.Unmarshal(data, &options); err != nil {
-		return nil, fmt.Errorf("failed to parse default material options JSON: %w", err)
-	}
-	return options, nil
 }
 
 // LoadDefaultOptionsFromBytes loads the material options from a byte slice.
@@ -394,7 +363,7 @@ func AddProfileToDatabase(db *MaterialDatabase, newProfile *FilamentProfileEntry
 // and appending new names to existing vendor/type combinations.
 func UpdateOptions(options MaterialOptions, notes *profiles.FilamentNotes) {
 	if options == nil {
-		return // Should not happen if LoadDefaultOptions is called
+		return
 	}
 
 	vendor := notes.Vendor
@@ -428,34 +397,6 @@ func UpdateOptions(options MaterialOptions, notes *profiles.FilamentNotes) {
 		options[vendor][filamentType] = name
 	}
 }
-
-// Removed SaveDatabase function - no longer persisting to local disk.
-/*
-func SaveDatabase(db *MaterialDatabase, filePath string) error {
-	data, err := json.MarshalIndent(db, "", "\t")
-	if err != nil {
-		return fmt.Errorf("failed to marshal material database JSON: %w", err)
-	}
-	if err := ioutil.WriteFile(filePath, data, 0644); err != nil {
-		return fmt.Errorf("failed to write material database file %s: %w", filePath, err)
-	}
-	return nil
-}
-*/
-
-// Removed SaveOptions function - no longer persisting to local disk.
-/*
-func SaveOptions(options MaterialOptions, filePath string) error {
-	data, err := json.MarshalIndent(options, "", "\t")
-	if err != nil {
-		return fmt.Errorf("failed to marshal material options JSON: %w", err)
-	}
-	if err := ioutil.WriteFile(filePath, data, 0644); err != nil {
-		return fmt.Errorf("failed to write material options file %s: %w", filePath, err)
-	}
-	return nil
-}
-*/
 
 // MarshalDatabase converts a MaterialDatabase struct to its JSON byte representation.
 func MarshalDatabase(db *MaterialDatabase) ([]byte, error) {
