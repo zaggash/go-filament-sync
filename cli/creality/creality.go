@@ -54,12 +54,12 @@ type KVParam struct {
 	EngPlateTemp                     string `json:"eng_plate_temp"`
 	EngPlateTempInitialLayer         string `json:"eng_plate_temp_initial_layer"`
 	EpoxyResinPlateTemp              string `json:"epoxy_resin_plate_temp"`
-	EpoxyResinPlateTempInitialLayer  string `json:"epoxy_resin_plate_initial_layer"`
+	EpoxyResinPlateTempInitialLayer  string `json:"epoxy_resin_plate_temp_initial_layer"`
 	FanCoolingLayerTime              string `json:"fan_cooling_layer_time"`
 	FanMaxSpeed                      string `json:"fan_max_speed"`
 	FanMinSpeed                      string `json:"fan_min_speed"`
 	FilamentCoolingFinalSpeed        string `json:"filament_cooling_final_speed"`
-	FilamentCoolingInitialSpeed      string `json:"filament_cooling_initial_initial"`
+	FilamentCoolingInitialSpeed        string `json:"filament_cooling_initial_speed"`
 	FilamentCoolingMoves             string `json:"filament_cooling_moves"`
 	FilamentCost                     string `json:"filament_cost"`
 	FilamentDensity                  string `json:"filament_density"`
@@ -141,7 +141,7 @@ type BaseInfo struct {
 	MinTemp       int      `json:"minTemp"`
 	MaxTemp       int      `json:"maxTemp"`
 	IsSoluble     bool     `json:"isSoluble"`
-	IsSupport     bool     `json:"isSuppoert"` // Note: "isSuppoert" as in source JSON
+	IsSupport     bool     `json:"isSupport"`
 	ShrinkageRate int      `json:"shrinkageRate"`
 	SofteningTemp int      `json:"softeningTemp"`
 	DryingTemp    int      `json:"dryingTemp"`
@@ -175,15 +175,16 @@ func ConvertToCrealityFormat(slicerProfileData map[string]string, notes *profile
 	if notes == nil {
 		return nil, fmt.Errorf("filament notes must not be nil")
 	}
-	// Marshal the original filamentNotes struct back into a JSON string, then escape it.
+	// Marshal the original filamentNotes struct to a JSON string for storage in kvParam.filament_notes.
+	// The reference format stores this as a plain JSON string (not double-encoded).
 	notesBytes, err := json.Marshal(notes)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal filament notes: %w", err)
 	}
-	quotedNotes := strconv.Quote(string(notesBytes)) // Add quotes around the JSON string
+	notesJSON := string(notesBytes)
 
 	newEntry := &FilamentProfileEntry{
-		EngineVersion:  slicerProfileData["version"],
+		EngineVersion:  "3.0.0", // Creality database format version, not the slicer profile version
 		PrinterIntName: "F008",          // Hardcoded from original JS
 		NozzleDiameter: []string{"0.4"}, // Hardcoded from original JS
 		KVParam:        KVParam{},
@@ -227,12 +228,12 @@ func ConvertToCrealityFormat(slicerProfileData map[string]string, notes *profile
 		EngPlateTemp:                     assignKVParam("eng_plate_temp"),
 		EngPlateTempInitialLayer:         assignKVParam("eng_plate_temp_initial_layer"),
 		EpoxyResinPlateTemp:              assignKVParam("epoxy_resin_plate_temp"),
-		EpoxyResinPlateTempInitialLayer:  assignKVParam("epoxy_resin_plate_initial_layer"),
+		EpoxyResinPlateTempInitialLayer:  assignKVParam("epoxy_resin_plate_temp_initial_layer"),
 		FanCoolingLayerTime:              assignKVParam("fan_cooling_layer_time"),
 		FanMaxSpeed:                      assignKVParam("fan_max_speed"),
 		FanMinSpeed:                      assignKVParam("fan_min_speed"),
 		FilamentCoolingFinalSpeed:        assignKVParam("filament_cooling_final_speed"),
-		FilamentCoolingInitialSpeed:      assignKVParam("filament_cooling_initial_initial"),
+		FilamentCoolingInitialSpeed:      assignKVParam("filament_cooling_initial_speed"),
 		FilamentCoolingMoves:             assignKVParam("filament_cooling_moves"),
 		FilamentCost:                     assignKVParam("filament_cost"),
 		FilamentDensity:                  assignKVParam("filament_density"),
@@ -249,7 +250,7 @@ func ConvertToCrealityFormat(slicerProfileData map[string]string, notes *profile
 		FilamentMultitoolRamming:         assignKVParam("filament_multitool_ramming"),
 		FilamentMultitoolRammingFlow:     assignKVParam("filament_multitool_ramming_flow"),
 		FilamentMultitoolRammingVolume:   assignKVParam("filament_multitool_ramming_volume"),
-		FilamentNotes:                    quotedNotes,
+		FilamentNotes:                    notesJSON,
 		FilamentRammingParameters:        assignKVParam("filament_ramming_parameters"),
 		FilamentRetractBeforeWipe:        assignKVParam("filament_retract_before_wipe"),
 		FilamentRetractLiftAbove:         assignKVParam("filament_retract_lift_above"),
