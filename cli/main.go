@@ -64,12 +64,9 @@ func main() {
 	// printerTargetDir is the remote path on the printer
 	printerTargetDir := "/mnt/UDISK/creality/userdata/box"
 
-	// Discover and load custom slicer profiles
-	profileDir, err := profiles.GetSlicerProfileDir(appConfig.Slicer, appConfig.UserID, appConfig.Flatpak)
-	if err != nil {
-		log.Fatalf("Error determining slicer profile directory: %v", err)
-	}
-	log.Printf("Scanning for %s profiles in: %s (Flatpak mode: %v)", appConfig.Slicer, profileDir, appConfig.Flatpak)
+	// Use user-supplied profile directory (validated in config.LoadConfig)
+	profileDir := appConfig.ProfilePath
+	log.Printf("Scanning for profiles in: %s", profileDir)
 
 	slicerProfilePaths, err := profiles.LoadCustomProfiles(profileDir)
 	if err != nil {
@@ -77,9 +74,9 @@ func main() {
 	}
 
 	if len(slicerProfilePaths) == 0 {
-		log.Println("No custom filament profiles found with required 'filament_notes'. Skipping synchronization.")
-		log.Println("Please ensure your custom profiles have 'filament_notes' as described in the original README:")
-		log.Println("https://github.com/HurricanePrint/Filament-Sync#creating-custom-filament-presets")
+		log.Printf("No custom filament profiles found in: %s", profileDir)
+		log.Println("Ensure your profiles have 'filament_notes' as described in the README:")
+		log.Println("https://github.com/zaggash/go-filament-sync#creating-custom-filament-presets")
 		return // Exit if no profiles to sync
 	}
 

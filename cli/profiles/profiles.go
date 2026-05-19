@@ -6,9 +6,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"runtime"
-	"sort"
-	"strconv"
 	"strings"
 )
 
@@ -118,92 +115,6 @@ func NormalizeSlicerProfile(slicerProfile *SlicerFilamentProfile) (map[string]st
 	return normalizedData, notes, nil
 }
 
-// GetSlicerProfileDir determines the correct slicer profile directory based on OS, slicer type, and the flatpak flag.
-// It dynamically searches for the latest version folder for Creality Print.
-func GetSlicerProfileDir(slicerType, userID string, isFlatpak bool) (string, error) {
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return "", fmt.Errorf("failed to get user home directory: %w", err)
-	}
-
-	// Determine Base Directory based on OS
-	var osBaseDir string
-	switch runtime.GOOS {
-	case "darwin":
-		osBaseDir = filepath.Join(homeDir, "Library", "Application Support")
-	case "linux":
-		if isFlatpak {
-			osBaseDir = homeDir
-		} else {
-			osBaseDir = filepath.Join(homeDir, ".config")
-		}
-	case "windows":
-		osBaseDir = filepath.Join(homeDir, "AppData", "Roaming")
-	default:
-		return "", fmt.Errorf("unsupported operating system: %s", runtime.GOOS)
-	}
-
-	// Handle OrcaSlicer (Static Path)
-	if slicerType == "orca" {
-		var relPath string
-		segment := filepath.Join("OrcaSlicer", "user", userID, "filament", "base")
-
-		if isFlatpak && runtime.GOOS == "linux" {
-			// Flatpak specific path for Orca
-			relPath = filepath.Join(".var", "app", "io.github.softfever.OrcaSlicer", "config", segment)
-		} else {
-			relPath = segment
-		}
-		
-		fullPath := filepath.Join(osBaseDir, relPath)
-		return checkPath(fullPath)
-	}
-
-	// Handle Creality Print (Dynamic Version path)
-	if slicerType == "creality" {
-		var searchDir string
-		
-		if isFlatpak && runtime.GOOS == "linux" {
-			searchDir = filepath.Join(osBaseDir, ".var", "app", "io.github.crealityofficial.CrealityPrint", "config", "Creality", "Creality Print")
-		} else {
-			searchDir = filepath.Join(osBaseDir, "Creality", "Creality Print")
-		}
-
-		// Read the directory to find version folders (e.g., "6.0", "7.0")
-		entries, err := os.ReadDir(searchDir)
-		if err != nil {
-			// If the base folder is missing, provide a clear error
-			return "", fmt.Errorf("could not find Creality Print installation directory at %s: %w", searchDir, err)
-		}
-
-		var versions []string
-		for _, e := range entries {
-			if e.IsDir() {
-				versions = append(versions, e.Name())
-			}
-		}
-
-		if len(versions) == 0 {
-			return "", fmt.Errorf("no version folders found in %s", searchDir)
-		}
-
-		// Sort versions using Natural Sort (so 10.0 comes after 9.0)
-		sort.Slice(versions, func(i, j int) bool {
-			return isVersionLess(versions[i], versions[j])
-		})
-
-		// Pick the highest version
-		latestVersion := versions[len(versions)-1]
-		
-		// Construct the final full path
-		fullPath := filepath.Join(searchDir, latestVersion, "user", userID, "filament", "base")
-		
-		return checkPath(fullPath)
-	}
-
-	return "", fmt.Errorf("unsupported slicer type: %s", slicerType)
-}
-
 // LoadCustomProfiles reads JSON files from the given directory and filters them.
 func LoadCustomProfiles(dir string) ([]string, error) {
 	var profilePaths []string
@@ -254,37 +165,4 @@ func LoadCustomProfiles(dir string) ([]string, error) {
 	}
 
 	return profilePaths, nil
-}
-
-// checkPath verifies if the calculated path actually exists on the disk.
-func checkPath(path string) (string, error) {
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return "", fmt.Errorf("slicer profile directory does not exist: %s", path)
-	}
-	return path, nil
-}
-
-// isVersionLess compares two version strings (like "6.0" and "10.1") naturally.
-// It splits by "." and compares numeric segments.
-func isVersionLess(v1, v2 string) bool {
-	s1 := strings.Split(v1, ".")
-	s2 := strings.Split(v2, ".")
-
-	for i := 0; i < len(s1) && i < len(s2); i++ {
-		n1, err1 := strconv.Atoi(s1[i])
-		n2, err2 := strconv.Atoi(s2[i])
-
-		// If both segments are numbers, compare numerically
-		if err1 == nil && err2 == nil {
-			if n1 != n2 {
-				return n1 < n2
-			}
-			continue
-		}
-		// Fallback to string comparison for non-numeric segments
-		if s1[i] != s2[i] {
-			return s1[i] < s2[i]
-		}
-	}
-	return len(s1) < len(s2)
 }
