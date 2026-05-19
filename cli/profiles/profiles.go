@@ -105,12 +105,10 @@ func NormalizeSlicerProfile(slicerProfile *SlicerFilamentProfile) (map[string]st
 		return nil, nil, fmt.Errorf("filament_notes is missing or empty in the profile")
 	}
 
-	if notes != nil {
-		normalizedData["filament_notes.id"] = notes.ID
-		normalizedData["filament_notes.vendor"] = notes.Vendor
-		normalizedData["filament_notes.type"] = notes.Type
-		normalizedData["filament_notes.name"] = notes.Name
-	}
+	normalizedData["filament_notes.id"] = notes.ID
+	normalizedData["filament_notes.vendor"] = notes.Vendor
+	normalizedData["filament_notes.type"] = notes.Type
+	normalizedData["filament_notes.name"] = notes.Name
 
 	return normalizedData, notes, nil
 }
