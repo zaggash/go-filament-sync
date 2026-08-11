@@ -1,3 +1,5 @@
+
+
 # go-filament-sync
 
 A single binary that syncs your custom filament profiles from your slicer directly to your Creality printer over the network — no printer-side installation required.
@@ -140,6 +142,7 @@ docker create --name temp_tool_container filament-sync-tool-builder:latest
 
 # 3. Copy the binaries to your current directory
 docker cp temp_tool_container:/app/filament-sync-tool_linux_amd64 ./filament-sync-tool_linux_amd64
+docker cp temp_tool_container:/app/filament-sync-tool_linux_arm64 ./filament-sync-tool_linux_arm64
 docker cp temp_tool_container:/app/filament-sync-tool_macos_amd64 ./filament-sync-tool_macos_amd64
 docker cp temp_tool_container:/app/filament-sync-tool_macos_arm64 ./filament-sync-tool_macos_arm64
 docker cp temp_tool_container:/app/filament-sync-tool_windows_amd64.exe ./filament-sync-tool_windows_amd64.exe
